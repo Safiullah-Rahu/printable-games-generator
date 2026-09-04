@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { PathCmd, PrintDoc, PrintElement, PrintPage } from '../types'
 import { CSS_FONT, measureText, pt2mm } from '../utils/text'
@@ -149,7 +149,11 @@ export interface PagePreviewProps {
   page: PrintPage
   width: number
   height: number
-  /** Rendered width in CSS pixels. */
+  /**
+   * Rendered width in CSS pixels. The SVG fills its parent instead of taking
+   * this width directly, so the caller can cap it (see DocPreview) and have the
+   * page shrink to fit a narrow screen rather than overflow it.
+   */
   pixelWidth?: number
   className?: string
 }
@@ -164,14 +168,14 @@ export const PagePreview = memo(function PagePreview({
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      width={pixelWidth}
-      height={pixelWidth ? (pixelWidth * height) / width : undefined}
       className={className}
       role="img"
       aria-label={page.label}
       style={
         pixelWidth
-          ? { display: 'block', background: '#fff' }
+          ? // Width comes from the wrapper, which is clamped to the viewport;
+            // the viewBox keeps the aspect ratio exact at any resulting size.
+            { display: 'block', background: '#fff', width: '100%', height: 'auto' }
           : { display: 'block', background: '#fff', width: '100%', height: '100%' }
       }
     >
@@ -189,10 +193,17 @@ export interface DocPreviewProps {
   zoom: number
   /** Restrict rendering to one page index. */
   pageIndex?: number
+  /**
+   * Reports the zoom percentage at which a page exactly fills the available
+   * width. The toolbar needs it because a page is capped to its container: on a
+   * phone the requested zoom is usually larger than what is actually drawn, and
+   * the control would otherwise report a size the user cannot see.
+   */
+  onFitZoom?: (percent: number) => void
 }
 
 /** Scrollable stack of rendered pages. */
-export function DocPreview({ doc, zoom, pageIndex }: DocPreviewProps): JSX.Element {
+export function DocPreview({ doc, zoom, pageIndex, onFitZoom }: DocPreviewProps): JSX.Element {
   const pages = useMemo(
     () => (pageIndex === undefined ? doc.pages : [doc.pages[pageIndex]].filter(Boolean)),
     [doc.pages, pageIndex],
@@ -200,11 +211,49 @@ export function DocPreview({ doc, zoom, pageIndex }: DocPreviewProps): JSX.Eleme
   // 3.78 px per mm is 96 dpi - the natural on-screen size of a printed page.
   const pixelWidth = (doc.width * 3.78 * zoom) / 100
 
+  const hostRef = useRef<HTMLDivElement>(null)
+  const [available, setAvailable] = useState(0)
+
+  const measure = useCallback(() => {
+    const host = hostRef.current
+    if (!host) return
+    const width = host.getBoundingClientRect().width
+    // Commit only real movement, or the layout effect below re-renders on every
+    // pass and never settles.
+    setAvailable((previous) => (Math.abs(previous - width) > 0.5 ? width : previous))
+  }, [])
+
+  // Runs after every render, which is what catches the preview column being
+  // revealed: below lg it is display:none until its tab is selected, and a
+  // ResizeObserver does not reliably report that transition.
+  useLayoutEffect(measure)
+
+  // This catches the window resizing while the column is already visible.
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(host)
+    return () => observer.disconnect()
+  }, [measure])
+
+  // Zero means "not currently laid out". Reporting it would tell the toolbar the
+  // page is infinitely oversized, so the last real measurement stands instead.
+  const fitZoom = available > 0 ? (available / (doc.width * 3.78)) * 100 : 0
+  useEffect(() => {
+    if (fitZoom > 0) onFitZoom?.(fitZoom)
+  }, [fitZoom, onFitZoom])
+
   return (
-    <div className="flex flex-col items-center gap-6 py-6">
+    <div ref={hostRef} className="flex w-full flex-col items-center gap-6 py-6">
       {pages.map((page, i) => (
-        <figure key={`${page.label}-${i}`} className="flex flex-col items-center gap-2">
-          <div className="overflow-hidden rounded-sm shadow-page ring-1 ring-slate-900/10">
+        <figure key={`${page.label}-${i}`} className="flex w-full flex-col items-center gap-2">
+          {/* Zoom sets the width it wants; max-width stops a 210mm page from
+              overflowing a 360px phone screen, so it fits by default. */}
+          <div
+            className="overflow-hidden rounded-sm shadow-page ring-1 ring-slate-900/10"
+            style={{ width: pixelWidth, maxWidth: '100%' }}
+          >
             <PagePreview page={page} width={doc.width} height={doc.height} pixelWidth={pixelWidth} />
           </div>
           <figcaption className="text-[11px] font-medium uppercase tracking-wider text-slate-500">

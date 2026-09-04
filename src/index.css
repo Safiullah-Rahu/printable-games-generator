@@ -9,6 +9,26 @@
     height: 100%;
   }
 
+  /*
+   * On phones 100% resolves against the *large* viewport, so the bottom of a
+   * full-height shell hides behind the browser's toolbar. 100svh is the
+   * smallest viewport - always fully visible, and it does not resize as the
+   * toolbar slides away, which would otherwise reflow the page mid-scroll.
+   */
+  @supports (height: 100svh) {
+    html,
+    body,
+    #root {
+      height: 100svh;
+    }
+  }
+
+  body {
+    /* The shell owns its scrolling; stop the page itself rubber-banding. */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;

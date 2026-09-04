@@ -1,3 +1,4 @@
+import { Clock, FileText, Sparkles, SlidersHorizontal } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { generateContentPack } from './ai/contentPack'
 import { forgetApiKey, loadAiSettings, saveAiSettings } from './ai/store'
@@ -31,7 +32,15 @@ import {
  * the cache key.
  */
 
-type Tab = 'setup' | 'ai' | 'history'
+/**
+ * Which section is showing.
+ *
+ * 'preview' is a phone-only destination. Below the lg breakpoint the shell is a
+ * single column and this state decides what occupies it; from lg upward the
+ * settings panel and the preview each have their own column and are both
+ * visible at all times, so the value is only ever used to pick the panel.
+ */
+type Tab = 'setup' | 'ai' | 'history' | 'preview'
 
 export default function App(): JSX.Element {
   const [config, setConfig] = useState<GameConfig>(
@@ -42,6 +51,8 @@ export default function App(): JSX.Element {
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('setup')
   const [zoom, setZoom] = useState(78)
+  // The largest zoom that still fits the preview column, reported by DocPreview.
+  const [fitZoom, setFitZoom] = useState(Infinity)
   const [pageIndex, setPageIndex] = useState<number | undefined>(undefined)
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory())
 
@@ -234,10 +245,12 @@ export default function App(): JSX.Element {
   /* ------------------------------ render ---------------------------- */
 
   const pageCount = game?.doc.pages.length ?? 0
+  // 'preview' has no panel of its own; on a wide screen it must still show one.
+  const panelTab: Exclude<Tab, 'preview'> = tab === 'preview' ? 'setup' : tab
   const warnings = game?.validation.issues.filter((i) => i.severity === 'warning') ?? []
 
   return (
-    <div className="flex h-screen flex-col bg-slate-100 text-slate-900">
+    <div className="flex h-full flex-col overflow-hidden bg-slate-100 text-slate-900">
       <Header
         game={game}
         busy={busy}
@@ -247,17 +260,21 @@ export default function App(): JSX.Element {
         onOpenPdf={handleOpenPdf}
       />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ------------------------- left column ------------------------- */}
-        <aside className="flex w-[400px] shrink-0 flex-col border-r border-slate-200 bg-white">
-          <div className="flex gap-1 border-b border-slate-200 px-3 pt-3">
+        <aside
+          className={`w-full min-w-0 shrink-0 flex-col border-slate-200 bg-white lg:flex lg:w-[400px] lg:border-r ${
+            tab === 'preview' ? 'hidden' : 'flex'
+          }`}
+        >
+          <div className="hidden gap-1 border-b border-slate-200 px-3 pt-3 lg:flex">
             {(['setup', 'ai', 'history'] as Tab[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
                 className={`rounded-t-lg px-3 py-2 text-sm font-medium capitalize transition ${
-                  tab === t
+                  panelTab === t
                     ? 'bg-white text-slate-900 shadow-[inset_0_-2px_0_0_theme(colors.slate.900)]'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
@@ -268,7 +285,7 @@ export default function App(): JSX.Element {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            {tab === 'ai' ? (
+            {panelTab === 'ai' ? (
               <AiPanel
                 settings={ai}
                 onChange={patchAi}
@@ -281,7 +298,7 @@ export default function App(): JSX.Element {
                 onClearPack={clearPack}
                 onForgetKey={forgetApiKey}
               />
-            ) : tab === 'setup' ? (
+            ) : panelTab === 'setup' ? (
               <div className="space-y-6">
                 <section>
                   <h2 className="mb-3 border-b border-slate-200 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -305,8 +322,10 @@ export default function App(): JSX.Element {
         </aside>
 
         {/* ------------------------ preview column ----------------------- */}
-        <main className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-2">
+        <main
+          className={`min-w-0 flex-1 flex-col lg:flex ${tab === 'preview' ? 'flex' : 'hidden'}`}
+        >
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-slate-200 bg-white px-3 py-2 sm:px-4">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-900">
                 {game?.meta.title ?? 'No preview'}
@@ -319,7 +338,7 @@ export default function App(): JSX.Element {
             </div>
 
             {pageCount > 1 && (
-              <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5">
+              <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-slate-100 p-0.5">
                 <button
                   type="button"
                   onClick={() => setPageIndex(undefined)}
@@ -348,17 +367,19 @@ export default function App(): JSX.Element {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.max(35, z - 12))}
-                className="grid h-7 w-7 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setZoom((z) => Math.max(20, Math.round(Math.min(z, fitZoom)) - 12))}
+                className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:h-7 sm:w-7"
                 aria-label="Zoom out"
               >
                 −
               </button>
-              <span className="w-10 text-center text-xs tabular-nums text-slate-500">{zoom}%</span>
+              <span className="w-10 text-center text-xs tabular-nums text-slate-500">
+                {zoom >= fitZoom ? 'Fit' : `${zoom}%`}
+              </span>
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.min(200, z + 12))}
-                className="grid h-7 w-7 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setZoom((z) => Math.min(200, Math.round(Math.min(z, fitZoom)) + 12))}
+                className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:h-7 sm:w-7"
                 aria-label="Zoom in"
               >
                 +
@@ -372,7 +393,7 @@ export default function App(): JSX.Element {
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-auto bg-slate-200/60 px-4">
+          <div className="min-h-0 flex-1 overflow-auto bg-slate-200/60 px-2 sm:px-4">
             {error ? (
               <div className="mx-auto mt-16 max-w-md rounded-xl bg-white p-6 text-center shadow-panel">
                 <p className="text-sm font-semibold text-red-600">Could not generate this game</p>
@@ -391,7 +412,7 @@ export default function App(): JSX.Element {
                 </Button>
               </div>
             ) : game ? (
-              <DocPreview doc={game.doc} zoom={zoom} pageIndex={pageIndex} />
+              <DocPreview doc={game.doc} zoom={zoom} pageIndex={pageIndex} onFitZoom={setFitZoom} />
             ) : (
               <div className="mt-24 text-center text-sm text-slate-500">Generating…</div>
             )}
@@ -446,6 +467,8 @@ export default function App(): JSX.Element {
         )}
       </div>
 
+      <MobileNav tab={tab} onSelect={setTab} historyCount={history.length} hasPack={pack !== null} />
+
       {game && <PrintSurface doc={game.doc} />}
     </div>
   )
@@ -467,32 +490,115 @@ function Header({
   onOpenPdf: () => void
 }): JSX.Element {
   return (
-    <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-2.5">
-      <div className="flex items-center gap-2.5">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-xs font-bold text-white">
+    <header className="flex shrink-0 flex-col gap-2 border-b border-slate-200 bg-white px-3 py-2 sm:flex-row sm:items-center sm:gap-3 sm:px-4 sm:py-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-900 text-xs font-bold text-white">
           PG
         </span>
-        <div className="leading-tight">
-          <h1 className="text-sm font-semibold">Printable Games Generator</h1>
-          <p className="text-[11px] text-slate-500">Runs entirely on this device — no account, no internet.</p>
+        <div className="min-w-0 leading-tight">
+          <h1 className="truncate text-sm font-semibold">Printable Games Generator</h1>
+          <p className="hidden text-[11px] text-slate-500 sm:block">
+            Runs entirely on this device — no account, no internet.
+          </p>
         </div>
+        {busy && <span className="ml-auto shrink-0 text-xs text-slate-400 sm:hidden">Generating…</span>}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
-        {busy && <span className="text-xs text-slate-400">Generating…</span>}
-        <Button onClick={onRegenerate} title="New content with the same settings">
-          Generate another
+      {/* Four equal columns on a phone; the labels shorten so they fit at 320px. */}
+      <div className="grid grid-cols-4 gap-1.5 sm:ml-auto sm:flex sm:items-center sm:gap-2">
+        {busy && <span className="hidden text-xs text-slate-400 sm:inline">Generating…</span>}
+        <Button onClick={onRegenerate} title="New content with the same settings" className="px-2 sm:px-3">
+          <span className="sm:hidden">New</span>
+          <span className="hidden sm:inline">Generate another</span>
         </Button>
-        <Button onClick={onOpenPdf} disabled={!game} title="Open the PDF in a new tab without saving it">
-          Preview PDF
+        <Button
+          onClick={onOpenPdf}
+          disabled={!game}
+          title="Open the PDF in a new tab without saving it"
+          className="px-2 sm:px-3"
+        >
+          <span className="sm:hidden">Open</span>
+          <span className="hidden sm:inline">Preview PDF</span>
         </Button>
-        <Button onClick={onPrint} disabled={!game}>
+        <Button onClick={onPrint} disabled={!game} className="px-2 sm:px-3">
           Print
         </Button>
-        <Button variant="primary" onClick={onDownload} disabled={!game}>
-          Download PDF
+        <Button variant="primary" onClick={onDownload} disabled={!game} className="px-2 sm:px-3">
+          <span className="sm:hidden">Save</span>
+          <span className="hidden sm:inline">Download PDF</span>
         </Button>
       </div>
     </header>
+  )
+}
+
+/**
+ * Bottom tab bar, phones and small tablets only.
+ *
+ * Below lg the shell shows one column at a time, so the sections that sit
+ * side by side on a desktop need somewhere to be switched from. It is a normal
+ * flex child rather than a fixed overlay, which keeps it clear of the scrolling
+ * content without any padding compensation, and it carries the iOS home-bar
+ * inset so the labels are not sitting under the indicator.
+ */
+function MobileNav({
+  tab,
+  onSelect,
+  historyCount,
+  hasPack,
+}: {
+  tab: Tab
+  onSelect: (tab: Tab) => void
+  historyCount: number
+  hasPack: boolean
+}): JSX.Element {
+  const items = [
+    { id: 'setup' as const, label: 'Set up', Icon: SlidersHorizontal },
+    { id: 'preview' as const, label: 'Preview', Icon: FileText },
+    { id: 'ai' as const, label: 'AI', Icon: Sparkles },
+    { id: 'history' as const, label: 'History', Icon: Clock },
+  ]
+
+  return (
+    <nav
+      aria-label="Sections"
+      className="flex shrink-0 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden"
+    >
+      {items.map(({ id, label, Icon }) => {
+        const active = tab === id
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onSelect(id)}
+            aria-current={active ? 'page' : undefined}
+            aria-label={id === 'history' ? `History, ${historyCount} saved` : label}
+            className={`relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition ${
+              active ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            {active && <span className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-slate-900" />}
+            <span className="relative">
+              <Icon className="h-5 w-5" strokeWidth={active ? 2.3 : 1.8} aria-hidden />
+              {id === 'history' && historyCount > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute -right-2 -top-1.5 min-w-[15px] rounded-full bg-slate-900 px-1 text-center text-[9px] font-semibold leading-[15px] text-white"
+                >
+                  {historyCount > 99 ? '99+' : historyCount}
+                </span>
+              )}
+              {id === 'ai' && hasPack && (
+                <span
+                  className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white"
+                  title="A content pack is active"
+                />
+              )}
+            </span>
+            {label}
+          </button>
+        )
+      })}
+    </nav>
   )
 }

@@ -104,6 +104,29 @@ Answer key on/off · Cutting guides · Name & date line · Ink saver.
 </tr>
 </table>
 
+### On a phone
+
+The layout is not a shrunken desktop. Below 1024px the three columns collapse to
+one, and a bottom tab bar switches between them; the settings panel and the
+preview each get the full screen instead of competing for it. A page is capped to
+the width available, so an A4 sheet fits a 390px screen and the zoom control
+reads **Fit** rather than a percentage the screen cannot actually show.
+
+<table>
+<tr>
+<td width="25%"><img src="screenshots/mobile/01-setup.png" alt="Game picker on a phone"></td>
+<td width="25%"><img src="screenshots/mobile/02-preview.png" alt="Preview on a phone"></td>
+<td width="25%"><img src="screenshots/mobile/03-ai.png" alt="AI panel on a phone"></td>
+<td width="25%"><img src="screenshots/mobile/04-history.png" alt="History on a phone"></td>
+</tr>
+<tr>
+<td><b>Set up</b></td>
+<td><b>Preview</b> — fits the screen</td>
+<td><b>AI</b> — optional, bring your own key</td>
+<td><b>History</b></td>
+</tr>
+</table>
+
 More in [`screenshots/`](screenshots). The design notes and an
 interview-oriented walkthrough are in [`PORTFOLIO.md`](PORTFOLIO.md).
 

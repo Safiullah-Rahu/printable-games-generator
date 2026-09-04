@@ -15,7 +15,7 @@ export function Field({
 }): JSX.Element {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
         <label htmlFor={htmlFor} className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
           {label}
         </label>
