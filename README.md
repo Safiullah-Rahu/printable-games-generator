@@ -20,7 +20,11 @@ makes zero network requests. See [AI boost](#ai-boost-optional).
   <img alt="Vite" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white">
   <img alt="Tests" src="https://img.shields.io/badge/tests-297%20passing-2ea44f">
   <img alt="Backend" src="https://img.shields.io/badge/backend-none-64748b">
+  <a href="https://printable-games-generator.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-online-000000?logo=vercel&logoColor=white"></a>
 </p>
+
+**▶ Try it live: [printable-games-generator.vercel.app](https://printable-games-generator.vercel.app)** — no sign-up,
+no account. Load it once, then turn off your Wi-Fi; it keeps working.
 
 ![The app](screenshots/app/01-word-search.png)
 
@@ -40,6 +44,7 @@ exact page that prints. 18 generators, live regeneration, PDF in one click.*
 - [Adding a new game type](#adding-a-new-game-type)
 - [Testing](#testing)
 - [Design decisions worth knowing](#design-decisions-worth-knowing)
+- [Deployment](#deployment)
 
 ---
 
@@ -376,6 +381,49 @@ and trivia. Adding a topic is a data edit that immediately benefits seven games.
 mirrored left-to-right, so long-edge duplex printing lands each answer behind its
 own question. That is the classic flash-card printing failure, and it lives in
 exactly one function.
+
+---
+
+## Deployment
+
+Live at **[printable-games-generator.vercel.app](https://printable-games-generator.vercel.app)**, hosted on Vercel as
+pure static files — there is no server component to deploy, because there is no
+server.
+
+```bash
+npm run build      # -> dist/  (~1.2 MB, 15 files precached by the service worker)
+```
+
+That `dist/` folder is the entire application. Any static host will serve it —
+Vercel, Netlify, GitHub Pages, S3, a USB stick. The build uses `base: './'`, so
+it also runs from a `file://` path with no web server at all.
+
+[`vercel.json`](vercel.json) exists for one reason: **the cache headers a PWA
+needs in order to update.**
+
+| Path | `Cache-Control` | Why |
+| --- | --- | --- |
+| `/sw.js`, `/registerSW.js` | `max-age=0, must-revalidate` | A visitor holding a cached service worker has to re-fetch it, or a new deploy never reaches them |
+| `/index.html`, `/manifest.webmanifest` | `max-age=0, must-revalidate` | These name the hashed bundles; a stale copy points at files that no longer exist |
+| `/assets/*`, `/workbox-*.js` | `max-age=31536000, immutable` | Content-hashed — the filename changes whenever the bytes do |
+
+Two things it deliberately does **not** do:
+
+- **No SPA catch-all rewrite.** There is no client-side router, and the build
+  uses a relative `base`. Rewriting unknown paths to `index.html` would serve a
+  page whose `./assets/…` URLs resolve against the invented path and 404. A real
+  404 is the honest answer.
+- **No Content-Security-Policy.** The PDF preview runs on `blob:` object URLs and
+  the opt-in AI panel calls `api.anthropic.com` straight from the page. A policy
+  has to be written against both before it is safe to enable, and a broken CSP is
+  worse than none.
+
+To deploy your own copy:
+
+```bash
+npm i -g vercel
+vercel --prod
+```
 
 ---
 
