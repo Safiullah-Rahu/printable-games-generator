@@ -14,6 +14,19 @@ or OpenAI key and a model can write fresh content on any topic you name, or pick
 a different game entirely. It is strictly additive — with no key set, the app
 makes zero network requests. See [AI boost](#ai-boost-optional).
 
+<p>
+  <img alt="React" src="https://img.shields.io/badge/React-18-149ECA?logo=react&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-297%20passing-2ea44f">
+  <img alt="Backend" src="https://img.shields.io/badge/backend-none-64748b">
+</p>
+
+![The app](screenshots/app/01-word-search.png)
+
+*The whole app: pick a game on the left, and the preview on the right is the
+exact page that prints. 18 generators, live regeneration, PDF in one click.*
+
 ---
 
 ## Contents
@@ -54,6 +67,40 @@ Subject (Maths, English, Science, Geography, History, General Knowledge, Logic,
 Vocabulary) · Maths topic (18 strands) · Players · Game length · Item count ·
 Theme (10) · Paper size (A4 / US Letter) · Orientation · Instructions on/off ·
 Answer key on/off · Cutting guides · Name & date line · Ink saver.
+
+---
+
+## What it looks like
+
+<table>
+<tr>
+<td width="50%"><img src="screenshots/sheets/board-game-p1.png" alt="Roll-and-move board game"></td>
+<td width="50%"><img src="screenshots/sheets/math-maze-p1.png" alt="Math maze"></td>
+</tr>
+<tr>
+<td><b>Educational Board Game</b> — a 48-space ring, question cards, a score sheet and an answer key. The rules are printed in the middle of the board.</td>
+<td><b>Math Maze</b> — a real single-solution maze with maths checkpoints on the route. The answer key draws the solved path.</td>
+</tr>
+<tr>
+<td><img src="screenshots/sheets/crossword-p1.png" alt="Crossword"></td>
+<td><img src="screenshots/sheets/logic-puzzle-p1.png" alt="Logic puzzle"></td>
+</tr>
+<tr>
+<td><b>Crossword</b> — interlocking placement with proper Across/Down numbering, cropped to its bounding box.</td>
+<td><b>Logic Puzzle</b> — clues, a working grid and an answer table. Every puzzle has exactly one provable answer.</td>
+</tr>
+<tr>
+<td><img src="screenshots/sheets/math-bingo-p1.png" alt="Math bingo"></td>
+<td><img src="screenshots/sheets/coordinate-grid-p1.png" alt="Coordinate grid"></td>
+</tr>
+<tr>
+<td><b>Math Bingo</b> — up to 30 unique cards plus a caller sheet, no two alike.</td>
+<td><b>Coordinate Grid</b> — plot the points and a hidden picture appears on the solution page.</td>
+</tr>
+</table>
+
+More in [`screenshots/`](screenshots). The design notes and an
+interview-oriented walkthrough are in [`PORTFOLIO.md`](PORTFOLIO.md).
 
 ---
 
