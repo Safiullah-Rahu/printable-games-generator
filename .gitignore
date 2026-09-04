@@ -9,3 +9,4 @@ coverage
 .claude/
 out/
 *.log
+.vercel
