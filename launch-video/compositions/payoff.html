@@ -1,0 +1,181 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: var(--paper);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+    #pay-ground {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgb(210 204 192 / 0.55) 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.35;
+    }
+
+    /* Opens on exactly what the last scene ended on, so the cut is invisible. */
+    #pay-window {
+      position: absolute;
+      left: 200px;
+      top: 65px;
+      width: 1520px;
+      height: 950px;
+      background: var(--sheet);
+      box-shadow: var(--shadow-paper);
+      overflow: hidden;
+    }
+    #pay-window img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Every page starts on the preview's exact rectangle and leaves from there. */
+    .pay-page {
+      position: absolute;
+      left: 746px;
+      top: 200px;
+      width: 579px;
+      height: 819px;
+      background: var(--sheet);
+      box-shadow: var(--shadow-paper);
+      transform-origin: 50% 50%;
+      overflow: hidden;
+      opacity: 0;
+    }
+    .pay-page img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+    #pay-p1 {
+      z-index: 2;
+    }
+    #pay-p2 {
+      z-index: 3;
+    }
+    /* The answer key is the page the film reads, so it sits in front. */
+    #pay-p3 {
+      z-index: 4;
+    }
+
+    /* Frame-space, so it keeps its size while the pages scale. */
+    #pay-pages-label {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 952px;
+      text-align: center;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--ink-muted);
+      opacity: 0;
+      z-index: 10;
+    }
+    #pay-claim {
+      position: absolute;
+      left: 170px;
+      bottom: 132px;
+      width: 1420px;
+      font-size: 86px;
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      color: var(--ink);
+      clip-path: inset(0 100% 0 0);
+      z-index: 30;
+    }
+    #pay-claim em {
+      font-style: normal;
+      color: var(--accent);
+    }
+  </style>
+
+  <div id="root" data-composition-id="payoff" data-width="1920" data-height="1080">
+    <div id="pay-scene" class="clip" data-start="0" data-duration="9.5" data-track-index="0">
+      <div id="pay-ground"></div>
+
+      <div id="pay-window"><img src="assets/ui/app-answerkey.png" alt="" /></div>
+
+      <div class="pay-page" id="pay-p1"><img src="assets/ui/sheet-game.png" alt="" /></div>
+      <div class="pay-page" id="pay-p2"><img src="assets/ui/sheet-solution.png" alt="" /></div>
+      <div class="pay-page" id="pay-p3"><img src="assets/ui/sheet-key.png" alt="" /></div>
+
+      <div id="pay-pages-label">Game · Solution grid · Answer key</div>
+
+      <div id="pay-claim">Every answer is <em>checked</em><br />before it prints.</div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+
+      // Where the three pages land on the desk once they leave the preview.
+      const FAN = [
+        { el: "#pay-p1", x: -396, y: -50, rot: -13, s: 0.95 },
+        { el: "#pay-p2", x: -76, y: -90, rot: -1, s: 1.0 },
+        { el: "#pay-p3", x: 250, y: -55, rot: 12, s: 0.95 },
+      ];
+
+      // One baseline for every page, so a seek anywhere resolves the same way.
+      tl.set(".pay-page", { x: 0, y: 0, rotate: 0, scale: 1, opacity: 0 }, 0);
+
+      // 1. The pages come off the product and settle on the desk.
+      FAN.forEach((p, i) => {
+        const at = 0.34 + i * 0.09;
+        tl.to(p.el, { opacity: 1, duration: 0.01 }, at);
+        tl.to(
+          p.el,
+          { x: p.x, y: p.y, rotate: p.rot, scale: p.s, duration: 0.86, ease: "power3.out" },
+          at,
+        );
+      });
+      tl.to("#pay-window", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 0.4);
+      tl.to("#pay-pages-label", { opacity: 1, duration: 0.34, ease: "power2.out" }, 1.3);
+
+      // 2. The answer key comes up to a size its own text can be read at. It is
+      //    the same element, not a second copy, so it reads as one object.
+      tl.to("#pay-pages-label", { opacity: 0, duration: 0.3, ease: "power2.in" }, 3.55);
+      tl.to(["#pay-p1", "#pay-p2"], { opacity: 0.18, duration: 0.42, ease: "power2.inOut" }, 3.62);
+      tl.to(
+        "#pay-p3",
+        { x: -75.5, y: 821.7, rotate: 0, scale: 3.2, duration: 0.92, ease: "power2.inOut" },
+        3.6,
+      );
+
+      // 3. Back down to the stack.
+      tl.to(
+        "#pay-p3",
+        { x: 250, y: -55, rotate: 12, scale: 0.95, duration: 0.82, ease: "power2.inOut" },
+        5.9,
+      );
+      tl.to(["#pay-p1", "#pay-p2"], { opacity: 1, duration: 0.42, ease: "power2.inOut" }, 6.1);
+      tl.to("#pay-pages-label", { opacity: 1, duration: 0.34, ease: "power2.out" }, 6.2);
+
+      // 4. The pages make room and the claim takes the lower third.
+      tl.to("#pay-pages-label", { opacity: 0, duration: 0.28, ease: "power2.in" }, 6.75);
+      tl.to(
+        ["#pay-p1", "#pay-p2", "#pay-p3"],
+        { y: "-=225", scale: "-=0.15", duration: 0.72, ease: "power2.inOut" },
+        6.78,
+      );
+      tl.fromTo(
+        "#pay-claim",
+        { clipPath: "inset(0 100% 0 0)" },
+        { clipPath: "inset(0 0% 0 0)", duration: 0.62, ease: "power2.out" },
+        6.85,
+      );
+
+      window.__timelines["payoff"] = tl;
+    })();
+  </script>
+</template>

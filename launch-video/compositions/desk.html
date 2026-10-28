@@ -1,0 +1,217 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: var(--paper);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+    /* The app's own canvas grid, same 22px spacing. */
+    #desk-ground {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgb(210 204 192 / 0.55) 1px, transparent 1px);
+      background-size: 22px 22px;
+      background-position: -1px -1px;
+    }
+    #desk-stage {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* A blank sheet, A4 proportion. It becomes the app window, so it is the
+       only thing in this scene that survives the cut. */
+    #desk-sheet {
+      position: absolute;
+      left: 545px;
+      top: 256px;
+      width: 430px;
+      height: 608px;
+      background: var(--sheet);
+      border-radius: 2px;
+      box-shadow: var(--shadow-paper);
+      transform-origin: 50% 50%;
+    }
+
+    #desk-note {
+      position: absolute;
+      left: 470px;
+      top: 310px;
+      width: 460px;
+      height: 420px;
+      background: var(--note);
+      box-shadow: 0 1px 2px rgb(28 25 20 / 0.14), 0 22px 44px -18px rgb(28 25 20 / 0.5);
+      transform-origin: 50% 90%;
+      padding: 54px 46px;
+    }
+    /* A fold along the top edge is what makes it read as a note rather than a
+       yellow rectangle. */
+    #desk-note::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 14px;
+      background: rgb(28 25 20 / 0.08);
+    }
+    #desk-note-a {
+      font-size: 62px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      line-height: 1.05;
+    }
+    #desk-note-b {
+      margin-top: 18px;
+      font-size: 34px;
+      font-weight: 700;
+      color: rgb(28 25 20 / 0.62);
+    }
+    #desk-note-c {
+      position: absolute;
+      left: 46px;
+      bottom: 44px;
+      font-size: 30px;
+      font-weight: 400;
+      color: rgb(28 25 20 / 0.52);
+    }
+
+    #desk-copy {
+      position: absolute;
+      left: 1090px;
+      top: 392px;
+      width: 660px;
+    }
+    #desk-time {
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--ink-subtle);
+      letter-spacing: -0.01em;
+    }
+    #desk-line {
+      margin-top: 14px;
+      font-size: 72px;
+      font-weight: 900;
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+      color: var(--ink);
+    }
+
+    /* Lands on the white surface before any UI appears, so it is never a title
+       over a screenshot. */
+    #desk-name {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 486px;
+      text-align: center;
+      font-size: 96px;
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      color: var(--ink);
+      clip-path: inset(0 100% 0 0);
+    }
+    #desk-grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.025;
+      background-image: repeating-linear-gradient(
+          0deg,
+          rgb(0 0 0 / 0.5) 0 1px,
+          transparent 1px 3px
+        ),
+        repeating-linear-gradient(90deg, rgb(0 0 0 / 0.5) 0 1px, transparent 1px 3px);
+      pointer-events: none;
+    }
+  </style>
+
+  <div id="root" data-composition-id="desk" data-width="1920" data-height="1080">
+    <div id="desk-scene" class="clip" data-start="0" data-duration="6.8" data-track-index="0">
+      <div id="desk-ground"></div>
+      <div id="desk-stage">
+        <div id="desk-sheet"></div>
+        <div id="desk-note" data-layout-allow-overflow>
+          <div id="desk-note-a">Gr 4 · maths</div>
+          <div id="desk-note-b">Thurs · period 3</div>
+          <div id="desk-note-c">something they'll actually do</div>
+        </div>
+        <div id="desk-copy">
+          <div id="desk-time">11:42 pm</div>
+          <div id="desk-line">Still nothing<br />for period three.</div>
+        </div>
+        <div id="desk-name">Printable Games Generator</div>
+      </div>
+      <div id="desk-grain"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+
+      // 1. The note settles. Frame 0 is the thumbnail, so it is already there.
+      tl.fromTo(
+        "#desk-note",
+        { scale: 1.015, rotate: -2.5 },
+        { scale: 1, rotate: -2.5, duration: 0.4, ease: "power3.out" },
+        0,
+      );
+      tl.fromTo("#desk-sheet", { opacity: 1 }, { opacity: 1, duration: 0.01 }, 0);
+
+      // 2. It lifts away, which is what reveals the blank sheet beneath.
+      tl.to(
+        "#desk-note",
+        { y: -1180, rotate: -11, scale: 1.04, duration: 0.46, ease: "power3.in" },
+        1.3,
+      );
+
+      // 3. The tension copy, wiped in rather than faded up.
+      tl.fromTo(
+        "#desk-time",
+        { clipPath: "inset(0 100% 0 0)" },
+        { clipPath: "inset(0 0% 0 0)", duration: 0.34, ease: "power2.out" },
+        1.82,
+      );
+      tl.fromTo(
+        "#desk-line",
+        { clipPath: "inset(0 100% 0 0)" },
+        { clipPath: "inset(0 0% 0 0)", duration: 0.52, ease: "power2.out" },
+        2.1,
+      );
+      tl.to("#desk-time", { opacity: 0, duration: 0.24, ease: "power2.in" }, 4.3);
+      tl.to("#desk-line", { opacity: 0, duration: 0.24, ease: "power2.in" }, 4.32);
+
+      // 4. The sheet becomes the window. Non-uniform scale is safe here: a blank
+      //    white rectangle has nothing inside it to distort, and it lands on the
+      //    exact 1520x950 the next scene opens at, so the cut is invisible.
+      tl.to(
+        "#desk-sheet",
+        {
+          x: 200,
+          y: -20,
+          scaleX: 1520 / 430,
+          scaleY: 950 / 608,
+          duration: 0.78,
+          ease: "power2.inOut",
+        },
+        4.6,
+      );
+
+      // 5. The product is named on the paper, before any UI exists.
+      tl.fromTo(
+        "#desk-name",
+        { clipPath: "inset(0 100% 0 0)" },
+        { clipPath: "inset(0 0% 0 0)", duration: 0.5, ease: "power2.out" },
+        5.24,
+      );
+      tl.to("#desk-name", { clipPath: "inset(0 100% 0 0)", duration: 0.34, ease: "power2.in" }, 6.3);
+
+      // The grid recedes as the white surface takes the frame.
+      tl.to("#desk-ground", { opacity: 0.35, duration: 0.6, ease: "power2.inOut" }, 4.6);
+
+      window.__timelines["desk"] = tl;
+    })();
+  </script>
+</template>

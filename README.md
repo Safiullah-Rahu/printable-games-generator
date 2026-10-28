@@ -146,6 +146,10 @@ reads **Fit** rather than a percentage the screen cannot actually show.
 More in [`screenshots/`](screenshots). The design notes and an
 interview-oriented walkthrough are in [`PORTFOLIO.md`](PORTFOLIO.md).
 
+A 32-second launch film built from these same screens — and the project that
+renders it frame by frame — is in [`launch-video/`](launch-video), along with
+[`SPEC.md`](launch-video/SPEC.md) and the posting captions.
+
 ---
 
 ## Quick start

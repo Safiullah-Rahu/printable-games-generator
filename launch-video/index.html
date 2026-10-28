@@ -1,0 +1,121 @@
+<!doctype html>
+<html
+  lang="en"
+  data-composition-variables='[
+    {"id":"claim","type":"string","label":"Claim line","default":"Every answer is checked before it prints."},
+    {"id":"url","type":"string","label":"URL","default":"printable-games-generator.vercel.app"},
+    {"id":"accent","type":"color","label":"Accent","default":"#4f46e5"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /*
+       * The film's palette is the product's own, taken from src/index.css:
+       * --canvas, --ink, --ink-muted, --line-strong and --accent. Nothing here
+       * is a design choice made for the video.
+       */
+      :root {
+        --paper: #efede8;
+        --sheet: #ffffff;
+        --ink: #16140f;
+        --ink-muted: #6a6458;
+        --ink-subtle: #9c9589;
+        --rule: #d2ccc0;
+        --accent: #4f46e5;
+        --note: #f2d16b;
+        --shadow-paper: 0 1px 2px rgb(28 25 20 / 0.12), 0 18px 48px -20px rgb(28 25 20 / 0.45);
+        --font: Inter, sans-serif;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        font-family: var(--font);
+        background: var(--paper);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="32.4"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="desk"
+        data-composition-id="desk"
+        data-composition-src="compositions/desk.html"
+        data-start="0"
+        data-duration="6.8"
+        data-track-index="0"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+        style="position: absolute; inset: 0; z-index: 1"
+      ></div>
+
+      <div
+        id="app"
+        data-composition-id="app"
+        data-composition-src="compositions/app.html"
+        data-start="6.8"
+        data-duration="12.7"
+        data-track-index="0"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+        style="position: absolute; inset: 0; z-index: 2"
+      ></div>
+
+      <div
+        id="payoff"
+        data-composition-id="payoff"
+        data-composition-src="compositions/payoff.html"
+        data-start="19.5"
+        data-duration="9.5"
+        data-track-index="0"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+        style="position: absolute; inset: 0; z-index: 3"
+      ></div>
+
+      <div
+        id="endcard"
+        data-composition-id="endcard"
+        data-composition-src="compositions/endcard.html"
+        data-start="29"
+        data-duration="3.4"
+        data-track-index="0"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+        style="position: absolute; inset: 0; z-index: 4"
+      ></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      // The scenes carry the motion; the runtime drives each one itself.
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

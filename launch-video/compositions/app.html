@@ -1,0 +1,173 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: var(--paper);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+    #app-ground {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgb(210 204 192 / 0.55) 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.35;
+    }
+
+    /* The camera. It moves; the screenshots inside it never do. */
+    #app-camera {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+    }
+
+    /* The window the blank sheet became: same 1520x950 the last scene landed on. */
+    #app-window {
+      position: absolute;
+      left: 200px;
+      top: 65px;
+      width: 1520px;
+      height: 950px;
+      background: var(--sheet);
+      box-shadow: var(--shadow-paper);
+      overflow: hidden;
+    }
+    #app-window img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    #app-search-img,
+    #app-picked-img,
+    #app-key-img {
+      opacity: 0;
+    }
+
+    /* Frame-space, so it keeps its real size while the camera pushes. */
+    #app-cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 38px;
+      height: 58px;
+      opacity: 0;
+      z-index: 50;
+      filter: drop-shadow(0 3px 6px rgb(28 25 20 / 0.35));
+    }
+    #app-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 74px;
+      white-space: nowrap;
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      background: rgb(255 255 255 / 0.92);
+      padding: 14px 26px;
+      border-radius: 14px;
+      box-shadow: 0 1px 2px rgb(28 25 20 / 0.1), 0 14px 32px -16px rgb(28 25 20 / 0.4);
+      opacity: 0;
+      z-index: 60;
+    }
+  </style>
+
+  <div id="root" data-composition-id="app" data-width="1920" data-height="1080">
+    <div id="app-scene" class="clip" data-start="0" data-duration="12.7" data-track-index="0">
+      <div id="app-ground"></div>
+
+      <div id="app-camera">
+        <div id="app-window">
+          <img id="app-before-img" src="assets/ui/app-before.png" alt="" />
+          <img id="app-search-img" src="assets/ui/app-search.png" alt="" />
+          <img id="app-picked-img" src="assets/ui/app-picked.png" alt="" />
+          <img id="app-key-img" src="assets/ui/app-answerkey.png" alt="" />
+        </div>
+      </div>
+
+      <svg id="app-cursor" viewBox="0 0 24 36" aria-hidden="true">
+        <path
+          d="M2 1.6 L2 29.4 L9.1 22.6 L13.6 33.2 L17.9 31.4 L13.5 21.1 L22.4 20.7 Z"
+          fill="#16140f"
+          stroke="#ffffff"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+      </svg>
+
+      <div id="app-label">Grade 4 · Medium · 3 pages</div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+
+      // Camera stops, in frame coordinates. Each is the transform that puts the
+      // named region of the 1520x950 window in the middle of the 1920x1080 frame.
+      const FULL = { scale: 1, x: 0, y: 0 };
+      const PANEL = { scale: 2.4, x: 1358, y: 377 };
+      const SHEET = { scale: 1.3, x: -98, y: -88 };
+
+      const move = (at, to, dur) =>
+        tl.to("#app-camera", { ...to, duration: dur, ease: "power2.inOut" }, at);
+
+      tl.set("#app-camera", FULL, 0);
+
+      // 1. The interface paints onto the white surface the sheet became.
+      tl.fromTo(
+        "#app-before-img",
+        { clipPath: "inset(0 0 100% 0)" },
+        { clipPath: "inset(0 0 0% 0)", duration: 0.34, ease: "power2.out" },
+        0,
+      );
+
+      // 2. Into the panel.
+      move(1.6, PANEL, 0.6);
+
+      // 3. The cursor arrives at the search field and the list narrows under it.
+      tl.set("#app-cursor", { opacity: 0, x: 1180, y: 1180, scale: 1 }, 0);
+      tl.to("#app-cursor", { opacity: 1, x: 854, y: 288, duration: 0.52, ease: "power3.out" }, 2.18);
+      tl.to("#app-search-img", { opacity: 1, duration: 0.08 }, 2.74);
+
+      // 4. Down to the card, and the click turns it indigo. A real state, not a
+      //    composite: app-picked.png is the app with the filter still applied.
+      tl.to("#app-cursor", { x: 740, y: 468, duration: 0.44, ease: "power2.inOut" }, 3.08);
+      tl.to("#app-cursor", { scale: 0.86, duration: 0.07, ease: "power2.in" }, 3.76);
+      tl.to("#app-cursor", { scale: 1, duration: 0.12, ease: "power2.out" }, 3.83);
+      tl.to("#app-picked-img", { opacity: 1, duration: 0.08 }, 3.82);
+
+      // 5. Back out: the sheet is already in the preview.
+      tl.to("#app-cursor", { opacity: 0, duration: 0.2, ease: "power2.in" }, 4.5);
+      move(4.6, FULL, 0.74);
+
+      // 6. Into the sheet, with the configuration named in the product's words.
+      move(6.5, SHEET, 0.66);
+      tl.fromTo(
+        "#app-label",
+        { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+        { opacity: 1, clipPath: "inset(0 0% 0 0)", duration: 0.38, ease: "power2.out" },
+        6.95,
+      );
+      tl.to("#app-label", { opacity: 0, duration: 0.24, ease: "power2.in" }, 9.05);
+
+      // 7. Page three. The sheet visibly becomes the answer key.
+      tl.to("#app-key-img", { opacity: 1, duration: 0.1 }, 8.5);
+
+      // 8. Out to the whole product, cursor to the real Download button.
+      move(9.7, FULL, 0.74);
+      tl.set("#app-cursor", { x: 1760, y: 620, scale: 1 }, 10.48);
+      tl.to("#app-cursor", { opacity: 1, x: 1636, y: 98, duration: 0.66, ease: "power3.out" }, 10.5);
+      tl.to("#app-cursor", { scale: 0.86, duration: 0.07, ease: "power2.in" }, 11.74);
+      tl.to("#app-cursor", { scale: 1, duration: 0.12, ease: "power2.out" }, 11.81);
+      tl.to("#app-cursor", { opacity: 0, duration: 0.18, ease: "power2.in" }, 12.2);
+
+      window.__timelines["app"] = tl;
+    })();
+  </script>
+</template>
