@@ -31,6 +31,17 @@ no account. Load it once, then turn off your Wi-Fi; it keeps working.
 *The whole app: pick a game on the left, and the preview on the right is the
 exact page that prints. 18 generators, live regeneration, PDF in one click.*
 
+<table>
+<tr>
+<td width="50%"><img src="screenshots/app/11-dark-mode.png" alt="The app in dark mode"></td>
+<td width="50%"><img src="screenshots/app/05-quick-starts.png" alt="Quick start presets"></td>
+</tr>
+<tr>
+<td><b>Light, dark, or follow the system.</b> Every colour is a semantic token, so the theme is one attribute on <code>&lt;html&gt;</code> and the palette re-points underneath it.</td>
+<td><b>Quick starts</b> for the setups teachers reach for most, when you do not want to touch eleven controls.</td>
+</tr>
+</table>
+
 ---
 
 ## Contents
@@ -72,6 +83,11 @@ Subject (Maths, English, Science, Geography, History, General Knowledge, Logic,
 Vocabulary) · Maths topic (18 strands) · Players · Game length · Item count ·
 Theme (10) · Paper size (A4 / US Letter) · Orientation · Instructions on/off ·
 Answer key on/off · Cutting guides · Name & date line · Ink saver.
+
+The interface itself also has a light and a dark theme and can follow the
+operating system. Its type is Inter, bundled as a single 48 KB variable font
+rather than fetched from a CDN — a web font request would break the promise
+that the app makes no network calls.
 
 ---
 

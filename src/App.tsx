@@ -1,4 +1,16 @@
-import { Clock, FileText, Sparkles, SlidersHorizontal } from 'lucide-react'
+import {
+  Clock,
+  Download,
+  ExternalLink,
+  FileText,
+  Monitor,
+  Moon,
+  Printer,
+  RefreshCw,
+  SlidersHorizontal,
+  Sparkles,
+  Sun,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { generateContentPack } from './ai/contentPack'
 import { forgetApiKey, loadAiSettings, saveAiSettings } from './ai/store'
@@ -9,7 +21,7 @@ import { ConfigPanel } from './components/ConfigPanel'
 import { DocPreview, PrintSurface } from './components/DocPreview'
 import { GameTypePicker } from './components/GameTypePicker'
 import { HistoryPanel } from './components/HistoryPanel'
-import { Button } from './components/ui/controls'
+import { Button, IconButton } from './components/ui/controls'
 import { applyPreset, defaultConfigFor, normalizeConfig, type Preset } from './engines/config'
 import { buildProfile } from './engines/difficulty'
 import { buildGame, GenerationError, nextSeed } from './engines/pipeline'
@@ -18,6 +30,7 @@ import { downloadPdf, pdfBlobUrl } from './pdf/exportPdf'
 import type { GameConfig, GeneratedGame } from './types'
 import { nowId } from './utils/misc'
 import { randomSeed } from './utils/rng'
+import { useTheme, type ThemeMode } from './utils/theme'
 import {
   addHistoryEntry, clearHistory, loadHistory, loadLastConfig,
   removeHistoryEntry, saveLastConfig, type HistoryEntry,
@@ -242,6 +255,8 @@ export default function App(): JSX.Element {
     setConfig((current) => ({ ...current, seed: nextSeed(current.seed) }))
   }, [])
 
+  const theme = useTheme()
+
   /* ------------------------------ render ---------------------------- */
 
   const pageCount = game?.doc.pages.length ?? 0
@@ -250,10 +265,12 @@ export default function App(): JSX.Element {
   const warnings = game?.validation.issues.filter((i) => i.severity === 'warning') ?? []
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-slate-100 text-slate-900">
+    <div className="flex h-full flex-col overflow-hidden bg-canvas text-ink">
       <Header
         game={game}
         busy={busy}
+        themeMode={theme.mode}
+        onThemeChange={theme.setMode}
         onRegenerate={regenerate}
         onPrint={handlePrint}
         onDownload={handleDownload}
@@ -263,28 +280,38 @@ export default function App(): JSX.Element {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ------------------------- left column ------------------------- */}
         <aside
-          className={`w-full min-w-0 shrink-0 flex-col border-slate-200 bg-white lg:flex lg:w-[400px] lg:border-r ${
+          className={`w-full min-w-0 shrink-0 flex-col border-line bg-surface lg:flex lg:w-[408px] lg:border-r ${
             tab === 'preview' ? 'hidden' : 'flex'
           }`}
         >
-          <div className="hidden gap-1 border-b border-slate-200 px-3 pt-3 lg:flex">
-            {(['setup', 'ai', 'history'] as Tab[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTab(t)}
-                className={`rounded-t-lg px-3 py-2 text-sm font-medium capitalize transition ${
-                  panelTab === t
-                    ? 'bg-white text-slate-900 shadow-[inset_0_-2px_0_0_theme(colors.slate.900)]'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {t === 'setup' ? 'Set up' : t === 'ai' ? (pack ? 'AI ✦' : 'AI') : `History (${history.length})`}
-              </button>
-            ))}
+          {/* Replaced by the bottom bar below lg. */}
+          <div className="hidden shrink-0 px-4 pt-4 lg:block">
+            <div className="flex gap-1 rounded-xl bg-surface-sunken p-1 ring-1 ring-inset ring-line">
+              {(['setup', 'ai', 'history'] as const).map((t) => {
+                const active = panelTab === t
+                const label =
+                  t === 'setup' ? 'Set up' : t === 'ai' ? 'AI boost' : `History (${history.length})`
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTab(t)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition duration-200 ${
+                      active ? 'bg-surface text-ink shadow-panel' : 'text-ink-muted hover:text-ink'
+                    }`}
+                  >
+                    {label}
+                    {t === 'ai' && pack && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-ok" title="A content pack is active" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <div className="scrollbar-slim min-h-0 flex-1 overflow-y-auto px-4 py-5">
             {panelTab === 'ai' ? (
               <AiPanel
                 settings={ai}
@@ -299,9 +326,9 @@ export default function App(): JSX.Element {
                 onForgetKey={forgetApiKey}
               />
             ) : panelTab === 'setup' ? (
-              <div className="space-y-6">
+              <div className="space-y-7">
                 <section>
-                  <h2 className="mb-3 border-b border-slate-200 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-subtle">
                     Game type
                   </h2>
                   <GameTypePicker value={config.gameType} onSelect={selectGameType} onPreset={usePreset} />
@@ -322,15 +349,11 @@ export default function App(): JSX.Element {
         </aside>
 
         {/* ------------------------ preview column ----------------------- */}
-        <main
-          className={`min-w-0 flex-1 flex-col lg:flex ${tab === 'preview' ? 'flex' : 'hidden'}`}
-        >
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-slate-200 bg-white px-3 py-2 sm:px-4">
+        <main className={`min-w-0 flex-1 flex-col lg:flex ${tab === 'preview' ? 'flex' : 'hidden'}`}>
+          <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-900">
-                {game?.meta.title ?? 'No preview'}
-              </p>
-              <p className="truncate text-xs text-slate-500">
+              <p className="truncate text-sm font-semibold text-ink">{game?.meta.title ?? 'No preview'}</p>
+              <p className="truncate text-xs text-ink-muted">
                 {game
                   ? `${generator?.name} · ${game.meta.variant} · ${pageCount} page${pageCount === 1 ? '' : 's'}`
                   : 'Adjust the settings to generate a game.'}
@@ -338,12 +361,12 @@ export default function App(): JSX.Element {
             </div>
 
             {pageCount > 1 && (
-              <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-slate-100 p-0.5">
+              <div className="scrollbar-slim flex max-w-full items-center gap-0.5 overflow-x-auto rounded-xl bg-surface-sunken p-1 ring-1 ring-inset ring-line">
                 <button
                   type="button"
                   onClick={() => setPageIndex(undefined)}
-                  className={`rounded-md px-2 py-1 text-xs font-medium transition ${
-                    pageIndex === undefined ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                  className={`shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                    pageIndex === undefined ? 'bg-surface text-ink shadow-panel' : 'text-ink-muted hover:text-ink'
                   }`}
                 >
                   All
@@ -354,8 +377,8 @@ export default function App(): JSX.Element {
                     type="button"
                     title={page.label}
                     onClick={() => setPageIndex(i)}
-                    className={`rounded-md px-2 py-1 text-xs font-medium tabular-nums transition ${
-                      pageIndex === i ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                    className={`min-w-[28px] shrink-0 rounded-lg px-2 py-1 text-xs font-semibold tabular-nums transition ${
+                      pageIndex === i ? 'bg-surface text-ink shadow-panel' : 'text-ink-muted hover:text-ink'
                     }`}
                   >
                     {i + 1}
@@ -364,42 +387,40 @@ export default function App(): JSX.Element {
               </div>
             )}
 
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
+            <div className="flex items-center gap-0.5 rounded-xl bg-surface-sunken p-1 ring-1 ring-inset ring-line">
+              <IconButton
+                label="Zoom out"
+                className="h-7 w-7"
                 onClick={() => setZoom((z) => Math.max(20, Math.round(Math.min(z, fitZoom)) - 12))}
-                className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:h-7 sm:w-7"
-                aria-label="Zoom out"
               >
-                −
-              </button>
-              <span className="w-10 text-center text-xs tabular-nums text-slate-500">
+                <span className="text-base leading-none">−</span>
+              </IconButton>
+              <span className="w-10 text-center text-xs font-semibold tabular-nums text-ink-muted">
                 {zoom >= fitZoom ? 'Fit' : `${zoom}%`}
               </span>
-              <button
-                type="button"
+              <IconButton
+                label="Zoom in"
+                className="h-7 w-7"
                 onClick={() => setZoom((z) => Math.min(200, Math.round(Math.min(z, fitZoom)) + 12))}
-                className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:h-7 sm:w-7"
-                aria-label="Zoom in"
               >
-                +
-              </button>
+                <span className="text-base leading-none">+</span>
+              </IconButton>
             </div>
           </div>
 
           {warnings.length > 0 && (
-            <div className="border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-xs text-amber-800">
+            <div className="shrink-0 border-b border-warn/30 bg-warn-soft px-4 py-1.5 text-xs text-warn">
               {warnings.length} layout note{warnings.length === 1 ? '' : 's'}: {warnings[0].message}
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-auto bg-slate-200/60 px-2 sm:px-4">
+          <div className="canvas-grid scrollbar-slim min-h-0 flex-1 overflow-auto px-2 sm:px-4">
             {error ? (
-              <div className="mx-auto mt-16 max-w-md rounded-xl bg-white p-6 text-center shadow-panel">
-                <p className="text-sm font-semibold text-red-600">Could not generate this game</p>
-                <p className="mt-2 text-sm text-slate-600">{error.message}</p>
+              <div className="mx-auto mt-16 max-w-md animate-fade-rise rounded-2xl border border-line bg-surface p-6 text-center shadow-pop">
+                <p className="text-sm font-semibold text-danger">Could not generate this game</p>
+                <p className="mt-2 text-sm text-ink-muted">{error.message}</p>
                 {error.details.length > 0 && (
-                  <ul className="mt-3 space-y-1 text-left text-xs text-slate-500">
+                  <ul className="mt-3 space-y-1 rounded-xl bg-surface-sunken p-3 text-left text-xs text-ink-muted">
                     {error.details.map((d) => (
                       <li key={d} className="font-mono leading-snug">
                         {d}
@@ -407,60 +428,69 @@ export default function App(): JSX.Element {
                     ))}
                   </ul>
                 )}
-                <Button variant="primary" className="mt-4" onClick={regenerate}>
+                <Button variant="primary" className="mt-5" onClick={regenerate}>
                   Try another seed
                 </Button>
               </div>
             ) : game ? (
               <DocPreview doc={game.doc} zoom={zoom} pageIndex={pageIndex} onFitZoom={setFitZoom} />
             ) : (
-              <div className="mt-24 text-center text-sm text-slate-500">Generating…</div>
+              <PreviewSkeleton />
             )}
           </div>
         </main>
 
         {/* -------------------------- info rail -------------------------- */}
         {game && (
-          <aside className="hidden w-56 shrink-0 flex-col gap-4 border-l border-slate-200 bg-white px-4 py-4 xl:flex">
+          <aside className="scrollbar-slim hidden w-60 shrink-0 flex-col gap-6 overflow-y-auto border-l border-line bg-surface px-4 py-5 xl:flex">
             <div>
-              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">This game</h3>
-              <dl className="space-y-1.5">
+              <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-subtle">
+                This game
+              </h3>
+              <dl className="space-y-0">
                 {Object.entries(game.meta.stats).map(([key, value]) => (
-                  <div key={key} className="flex items-baseline justify-between gap-2">
-                    <dt className="truncate text-xs text-slate-500">{key}</dt>
-                    <dd className="shrink-0 text-xs font-semibold tabular-nums text-slate-900">{value}</dd>
+                  <div
+                    key={key}
+                    className="flex items-baseline justify-between gap-2 border-b border-line py-1.5 last:border-0"
+                  >
+                    <dt className="truncate text-xs text-ink-muted">{key}</dt>
+                    <dd className="shrink-0 text-xs font-semibold tabular-nums text-ink">{value}</dd>
                   </div>
                 ))}
               </dl>
             </div>
 
             <div>
-              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Pages</h3>
-              <ol className="space-y-1">
+              <h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-subtle">
+                Pages
+              </h3>
+              <ol className="space-y-0.5">
                 {game.doc.pages.map((page, i) => (
                   <li key={`${page.label}-${i}`}>
                     <button
                       type="button"
                       onClick={() => setPageIndex(i)}
-                      className={`w-full truncate rounded px-1.5 py-1 text-left text-xs transition ${
-                        pageIndex === i ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                      className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition ${
+                        pageIndex === i
+                          ? 'bg-accent-soft font-semibold text-accent'
+                          : 'text-ink-muted hover:bg-surface-sunken hover:text-ink'
                       }`}
                     >
-                      <span className="tabular-nums opacity-60">{i + 1}.</span> {page.label}
+                      <span className="w-3 shrink-0 tabular-nums opacity-60">{i + 1}</span>
+                      <span className="truncate">{page.label}</span>
                     </button>
                   </li>
                 ))}
               </ol>
             </div>
 
-            <div className="mt-auto space-y-1 border-t border-slate-200 pt-3">
-              <p className="text-[11px] leading-relaxed text-slate-400">
-                Seed
-                <br />
-                <span className="font-mono text-[10px] text-slate-600">{game.config.seed}</span>
-              </p>
-              <p className="text-[11px] leading-relaxed text-slate-400">
-                Generated in {game.attempts} pass{game.attempts === 1 ? '' : 'es'}, fully offline.
+            <div className="mt-auto space-y-2 border-t border-line pt-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-subtle">Seed</p>
+                <p className="mt-0.5 break-all font-mono text-[11px] text-ink-muted">{game.config.seed}</p>
+              </div>
+              <p className="text-[11px] leading-relaxed text-ink-subtle">
+                Built in {game.attempts} pass{game.attempts === 1 ? '' : 'es'}, entirely on this device.
               </p>
             </div>
           </aside>
@@ -474,9 +504,68 @@ export default function App(): JSX.Element {
   )
 }
 
+/** Placeholder with the proportions of an A4 sheet, so nothing jumps on arrival. */
+function PreviewSkeleton(): JSX.Element {
+  return (
+    <div className="flex w-full flex-col items-center py-6">
+      <div
+        className="relative w-full max-w-[520px] overflow-hidden rounded-[3px] bg-surface shadow-page"
+        style={{ aspectRatio: '210 / 297' }}
+      >
+        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-ink/[0.045] to-transparent" />
+      </div>
+      <p className="mt-4 text-xs font-medium text-ink-muted">Generating…</p>
+    </div>
+  )
+}
+
+const THEME_OPTIONS: ReadonlyArray<{ id: ThemeMode; label: string; Icon: typeof Sun }> = [
+  { id: 'light', label: 'Light', Icon: Sun },
+  { id: 'system', label: 'Match system', Icon: Monitor },
+  { id: 'dark', label: 'Dark', Icon: Moon },
+]
+
+function ThemeToggle({
+  mode,
+  onChange,
+}: {
+  mode: ThemeMode
+  onChange: (mode: ThemeMode) => void
+}): JSX.Element {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Colour theme"
+      className="flex items-center gap-0.5 rounded-xl bg-surface-sunken p-1 ring-1 ring-inset ring-line"
+    >
+      {THEME_OPTIONS.map(({ id, label, Icon }) => {
+        const active = mode === id
+        return (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={label}
+            title={label}
+            onClick={() => onChange(id)}
+            className={`grid h-7 w-7 place-items-center rounded-lg transition duration-200 ${
+              active ? 'bg-surface text-accent shadow-panel' : 'text-ink-subtle hover:text-ink'
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function Header({
   game,
   busy,
+  themeMode,
+  onThemeChange,
   onRegenerate,
   onPrint,
   onDownload,
@@ -484,49 +573,65 @@ function Header({
 }: {
   game: GeneratedGame | null
   busy: boolean
+  themeMode: ThemeMode
+  onThemeChange: (mode: ThemeMode) => void
   onRegenerate: () => void
   onPrint: () => void
   onDownload: () => void
   onOpenPdf: () => void
 }): JSX.Element {
   return (
-    <header className="flex shrink-0 flex-col gap-2 border-b border-slate-200 bg-white px-3 py-2 sm:flex-row sm:items-center sm:gap-3 sm:px-4 sm:py-2.5">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-900 text-xs font-bold text-white">
+    <header className="flex shrink-0 flex-col gap-2.5 border-b border-line bg-surface px-3 py-2.5 sm:flex-row sm:items-center sm:gap-4 sm:px-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          aria-hidden
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent text-[11px] font-black tracking-tight text-accent-ink shadow-panel"
+        >
           PG
         </span>
         <div className="min-w-0 leading-tight">
-          <h1 className="truncate text-sm font-semibold">Printable Games Generator</h1>
-          <p className="hidden text-[11px] text-slate-500 sm:block">
-            Runs entirely on this device — no account, no internet.
+          <h1 className="truncate text-sm font-bold tracking-tight text-ink">Printable Games Generator</h1>
+          <p className="hidden items-center gap-1.5 text-[11px] text-ink-muted sm:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
+            Runs entirely on this device — no account, no internet
           </p>
         </div>
-        {busy && <span className="ml-auto shrink-0 text-xs text-slate-400 sm:hidden">Generating…</span>}
+        {busy && <span className="ml-auto shrink-0 text-xs text-ink-subtle sm:hidden">Generating…</span>}
       </div>
 
-      {/* Four equal columns on a phone; the labels shorten so they fit at 320px. */}
-      <div className="grid grid-cols-4 gap-1.5 sm:ml-auto sm:flex sm:items-center sm:gap-2">
-        {busy && <span className="hidden text-xs text-slate-400 sm:inline">Generating…</span>}
-        <Button onClick={onRegenerate} title="New content with the same settings" className="px-2 sm:px-3">
-          <span className="sm:hidden">New</span>
-          <span className="hidden sm:inline">Generate another</span>
-        </Button>
-        <Button
-          onClick={onOpenPdf}
-          disabled={!game}
-          title="Open the PDF in a new tab without saving it"
-          className="px-2 sm:px-3"
-        >
-          <span className="sm:hidden">Open</span>
-          <span className="hidden sm:inline">Preview PDF</span>
-        </Button>
-        <Button onClick={onPrint} disabled={!game} className="px-2 sm:px-3">
-          Print
-        </Button>
-        <Button variant="primary" onClick={onDownload} disabled={!game} className="px-2 sm:px-3">
-          <span className="sm:hidden">Save</span>
-          <span className="hidden sm:inline">Download PDF</span>
-        </Button>
+      <div className="flex items-center gap-2 sm:ml-auto">
+        {busy && <span className="hidden text-xs text-ink-subtle sm:inline">Generating…</span>}
+        <div className="hidden sm:block">
+          <ThemeToggle mode={themeMode} onChange={onThemeChange} />
+        </div>
+
+        {/* Four equal columns on a phone; the labels shorten so they fit at 320px. */}
+        <div className="grid w-full grid-cols-4 gap-1.5 sm:flex sm:w-auto sm:gap-2">
+          <Button onClick={onRegenerate} title="New content with the same settings" className="px-2 sm:px-3.5">
+            <RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} aria-hidden />
+            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">Generate another</span>
+          </Button>
+          <Button
+            onClick={onOpenPdf}
+            disabled={!game}
+            title="Open the PDF in a new tab without saving it"
+            className="px-2 sm:px-3.5"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            <span className="sm:hidden">Open</span>
+            <span className="hidden sm:inline">Preview PDF</span>
+          </Button>
+          <Button onClick={onPrint} disabled={!game} className="px-2 sm:px-3.5">
+            <Printer className="h-3.5 w-3.5" aria-hidden />
+            Print
+          </Button>
+          <Button variant="primary" onClick={onDownload} disabled={!game} className="px-2 sm:px-3.5">
+            <Download className="h-3.5 w-3.5" aria-hidden />
+            <span className="sm:hidden">Save</span>
+            <span className="hidden sm:inline">Download PDF</span>
+          </Button>
+        </div>
       </div>
     </header>
   )
@@ -562,7 +667,7 @@ function MobileNav({
   return (
     <nav
       aria-label="Sections"
-      className="flex shrink-0 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="flex shrink-0 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       {items.map(({ id, label, Icon }) => {
         const active = tab === id
@@ -573,24 +678,24 @@ function MobileNav({
             onClick={() => onSelect(id)}
             aria-current={active ? 'page' : undefined}
             aria-label={id === 'history' ? `History, ${historyCount} saved` : label}
-            className={`relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium transition ${
-              active ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+            className={`relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition ${
+              active ? 'text-accent' : 'text-ink-subtle hover:text-ink'
             }`}
           >
-            {active && <span className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-slate-900" />}
+            {active && <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-accent" />}
             <span className="relative">
               <Icon className="h-5 w-5" strokeWidth={active ? 2.3 : 1.8} aria-hidden />
               {id === 'history' && historyCount > 0 && (
                 <span
                   aria-hidden
-                  className="absolute -right-2 -top-1.5 min-w-[15px] rounded-full bg-slate-900 px-1 text-center text-[9px] font-semibold leading-[15px] text-white"
+                  className="absolute -right-2 -top-1.5 min-w-[15px] rounded-full bg-accent px-1 text-center text-[9px] font-bold leading-[15px] text-accent-ink"
                 >
                   {historyCount > 99 ? '99+' : historyCount}
                 </span>
               )}
               {id === 'ai' && hasPack && (
                 <span
-                  className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white"
+                  className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-ok ring-2 ring-surface"
                   title="A content pack is active"
                 />
               )}

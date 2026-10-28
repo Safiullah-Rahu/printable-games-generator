@@ -43,9 +43,9 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
       <section>
         <SectionHeading>Optional AI boost</SectionHeading>
 
-        <p className="mb-4 text-xs leading-relaxed text-slate-600">
+        <p className="mb-4 text-xs leading-relaxed text-ink-muted">
           Everything in this app already works offline. Add your own API key and a model can write
-          <strong className="font-semibold text-slate-800"> fresh content on any topic</strong> you
+          <strong className="font-semibold text-ink"> fresh content on any topic</strong> you
           name, or pick a completely different game for you. The sheet is still built, validated and
           rendered on this device.
         </p>
@@ -72,7 +72,7 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
                 spellCheck={false}
                 placeholder={`${provider.keyPrefix}…`}
                 onChange={(e) => onChange({ apiKey: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-900/10"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs text-ink  outline-none transition placeholder:text-ink-subtle focus:border-accent focus:ring-2 focus:ring-accent/15"
               />
               <Button onClick={() => setShowKey((v) => !v)} title={showKey ? 'Hide key' : 'Show key'}>
                 {showKey ? 'Hide' : 'Show'}
@@ -81,14 +81,14 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
           </Field>
 
           {keyLooksWrong && (
-            <p className="-mt-2 text-xs text-amber-700">
+            <p className="-mt-2 text-xs text-warn">
               That does not look like a {provider.label} key (expected it to start with{' '}
               <code className="font-mono">{provider.keyPrefix}</code>). It will still be sent if you
               continue.
             </p>
           )}
 
-          <div className="rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-slate-200/70">
+          <div className="rounded-lg bg-surface-sunken px-3 py-2 ring-1 ring-line">
             <Toggle
               checked={settings.remember}
               onChange={(remember) => {
@@ -107,7 +107,7 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
               value={settings.model}
               spellCheck={false}
               onChange={(e) => onChange({ model: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-900 shadow-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-900/10"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs text-ink  outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/15"
             />
             <datalist id="ai-model-options">
               {provider.models.map((m) => (
@@ -126,9 +126,9 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
           </Field>
 
           {!provider.browserReachable && (
-            <div className="rounded-lg bg-amber-50 px-3 py-2.5 ring-1 ring-amber-200">
-              <p className="text-xs font-semibold text-amber-900">A proxy is required for {provider.label}</p>
-              <p className="mt-1 text-[11px] leading-relaxed text-amber-800">
+            <div className="rounded-lg bg-warn-soft px-3 py-2.5 ring-1 ring-warn/25">
+              <p className="text-xs font-semibold text-warn">A proxy is required for {provider.label}</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-warn">
                 Their API does not allow calls straight from a browser, so a request from this page
                 is blocked before it reaches them. Point the field below at your own proxy, or use
                 Anthropic, which supports direct browser access.
@@ -164,7 +164,7 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
           >
             {busy === 'content' ? 'Writing content…' : 'Write fresh content on this topic'}
           </Button>
-          <p className="px-1 text-[11px] leading-relaxed text-slate-500">
+          <p className="px-1 text-[11px] leading-relaxed text-ink-muted">
             Fills the current game with model-written words, clues and questions. Works with word
             search, crossword, quiz and flash cards, matching, memory, trivia and the board game.
           </p>
@@ -176,23 +176,23 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
           >
             {busy === 'variation' ? 'Choosing a game…' : 'Surprise me with a different game'}
           </Button>
-          <p className="px-1 text-[11px] leading-relaxed text-slate-500">
+          <p className="px-1 text-[11px] leading-relaxed text-ink-muted">
             Lets the model pick the game type, subject, theme and size. Its choice is checked against
             what this app can actually build before anything is generated.
           </p>
         </div>
 
         {error && (
-          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2.5 ring-1 ring-red-200">
-            <p className="text-xs font-semibold text-red-800">{error.message}</p>
+          <div className="mt-4 rounded-lg bg-danger-soft px-3 py-2.5 ring-1 ring-danger/25">
+            <p className="text-xs font-semibold text-danger">{error.message}</p>
             {error.kind === 'network' && (
-              <p className="mt-1 text-[11px] leading-relaxed text-red-700">
+              <p className="mt-1 text-[11px] leading-relaxed text-danger">
                 If you are offline this is expected — everything except this panel still works. If
                 you are online, your browser or an extension may be blocking the request.
               </p>
             )}
             {error.detail && (
-              <p className="mt-1 max-h-24 overflow-y-auto font-mono text-[10px] leading-snug text-red-600">
+              <p className="mt-1 max-h-24 overflow-y-auto font-mono text-[10px] leading-snug text-danger">
                 {error.detail.slice(0, 500)}
               </p>
             )}
@@ -202,7 +202,7 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
         {notes.length > 0 && (
           <ul className="mt-3 space-y-1">
             {notes.map((note) => (
-              <li key={note} className="text-[11px] leading-relaxed text-amber-700">
+              <li key={note} className="text-[11px] leading-relaxed text-warn">
                 {note}
               </li>
             ))}
@@ -217,7 +217,7 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
               <button
                 type="button"
                 onClick={props.onClearPack}
-                className="text-[11px] font-medium text-slate-400 transition hover:text-red-600"
+                className="text-[11px] font-medium text-ink-subtle transition hover:text-danger"
               >
                 Remove
               </button>
@@ -226,32 +226,32 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
             Active content pack
           </SectionHeading>
 
-          <div className="rounded-lg bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200">
-            <p className="text-sm font-medium text-slate-900">{pack.topic}</p>
-            <p className="mt-0.5 text-[11px] text-slate-500">
+          <div className="rounded-lg bg-surface-sunken px-3 py-2.5 ring-1 ring-line">
+            <p className="text-sm font-medium text-ink">{pack.topic}</p>
+            <p className="mt-0.5 text-[11px] text-ink-muted">
               {pack.model} · {pack.facts.length} facts · {pack.questions.length} questions ·{' '}
               {pack.words.length} words
             </p>
-            <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+            <p className="mt-1.5 text-[11px] leading-relaxed text-ink-muted">
               This content is used first, then topped up from the built-in libraries. Regenerating
               the game reuses it — no further requests are made.
             </p>
           </div>
 
           {pack.facts.length > 0 && (
-            <details className="mt-2 rounded-lg ring-1 ring-slate-200">
-              <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600">
+            <details className="mt-2 rounded-lg ring-1 ring-line">
+              <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-ink-muted">
                 Preview what the model wrote
               </summary>
               <ul className="max-h-56 space-y-1 overflow-y-auto px-3 pb-3">
                 {pack.facts.slice(0, 12).map((fact) => (
-                  <li key={fact.term} className="text-[11px] leading-snug text-slate-600">
-                    <span className="font-semibold text-slate-800">{fact.term}</span> — {fact.clue}
+                  <li key={fact.term} className="text-[11px] leading-snug text-ink-muted">
+                    <span className="font-semibold text-ink">{fact.term}</span> — {fact.clue}
                   </li>
                 ))}
                 {pack.questions.slice(0, 8).map((q) => (
-                  <li key={q.question} className="text-[11px] leading-snug text-slate-600">
-                    {q.question} <span className="font-semibold text-slate-800">→ {q.answer}</span>
+                  <li key={q.question} className="text-[11px] leading-snug text-ink-muted">
+                    {q.question} <span className="font-semibold text-ink">→ {q.answer}</span>
                   </li>
                 ))}
               </ul>
@@ -262,21 +262,21 @@ export function AiPanel(props: AiPanelProps): JSX.Element {
 
       <section>
         <SectionHeading>What gets sent</SectionHeading>
-        <ul className="space-y-1.5 text-[11px] leading-relaxed text-slate-500">
+        <ul className="space-y-1.5 text-[11px] leading-relaxed text-ink-muted">
           <li>
-            <strong className="text-slate-700">Sent:</strong> your topic, the grade, difficulty and
+            <strong className="text-ink">Sent:</strong> your topic, the grade, difficulty and
             subject — and your API key, to that provider only.
           </li>
           <li>
-            <strong className="text-slate-700">Not sent:</strong> generated games, your history, or
+            <strong className="text-ink">Not sent:</strong> generated games, your history, or
             anything else on this device.
           </li>
           <li>
-            <strong className="text-slate-700">Checked:</strong> every returned item is length- and
+            <strong className="text-ink">Checked:</strong> every returned item is length- and
             character-filtered, and any maths answer is re-derived and dropped if it does not verify.
           </li>
           <li>
-            <strong className="text-slate-700">Billing:</strong> requests go to your own account at
+            <strong className="text-ink">Billing:</strong> requests go to your own account at
             your provider's rates. Nothing is proxied through anyone else.
           </li>
         </ul>

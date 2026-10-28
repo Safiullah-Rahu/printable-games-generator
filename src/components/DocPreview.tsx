@@ -251,12 +251,12 @@ export function DocPreview({ doc, zoom, pageIndex, onFitZoom }: DocPreviewProps)
           {/* Zoom sets the width it wants; max-width stops a 210mm page from
               overflowing a 360px phone screen, so it fits by default. */}
           <div
-            className="overflow-hidden rounded-sm shadow-page ring-1 ring-slate-900/10"
+            className="overflow-hidden rounded-[3px] shadow-page ring-1 ring-black/10"
             style={{ width: pixelWidth, maxWidth: '100%' }}
           >
             <PagePreview page={page} width={doc.width} height={doc.height} pixelWidth={pixelWidth} />
           </div>
-          <figcaption className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+          <figcaption className="rounded-full bg-surface/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-muted ring-1 ring-line backdrop-blur">
             {pageIndex === undefined ? `${i + 1} / ${doc.pages.length}` : `${pageIndex + 1} / ${doc.pages.length}`}
             {' · '}
             {page.label}

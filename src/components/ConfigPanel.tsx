@@ -27,7 +27,7 @@ export function ConfigPanel({
   onChange: (patch: Partial<GameConfig>) => void
 }): JSX.Element {
   const generator = getGenerator(config.gameType)
-  if (!generator) return <p className="text-sm text-red-600">Unknown game type.</p>
+  if (!generator) return <p className="text-sm text-danger">Unknown game type.</p>
 
   const subjectOptions: Array<Option<GameConfig['subject']>> = SUBJECTS
     .filter((s) => generator.subjects.includes(s.id))
@@ -62,13 +62,13 @@ export function ConfigPanel({
             />
           </Field>
 
-          <div className="rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-slate-200/70">
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <div className="rounded-lg bg-surface-sunken px-3 py-2 ring-1 ring-line">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-subtle">
               What this produces
             </p>
             <ul className="space-y-0.5">
               {describeProfile(profile).map((line) => (
-                <li key={line} className="text-xs leading-snug text-slate-600">
+                <li key={line} className="text-xs leading-snug text-ink-muted">
                   {line}
                 </li>
               ))}
@@ -140,8 +140,8 @@ export function ConfigPanel({
                   onClick={() => onChange({ lengthMinutes: minutes })}
                   className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
                     config.lengthMinutes === minutes
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-accent text-accent-ink shadow-panel'
+                      : 'bg-surface-sunken text-ink-muted hover:text-ink ring-1 ring-inset ring-line'
                   }`}
                 >
                   {minutes}m
@@ -154,7 +154,7 @@ export function ConfigPanel({
                 value={config.lengthMinutes}
                 onChange={(e) => onChange({ lengthMinutes: Number(e.target.value) })}
                 aria-label="Custom length in minutes"
-                className="w-16 rounded-md border border-slate-200 px-2 py-1 text-xs tabular-nums outline-none focus:border-slate-400"
+                className="w-16 rounded-md border border-line px-2 py-1 text-xs tabular-nums outline-none focus:border-accent"
               />
             </div>
           </Field>
@@ -176,14 +176,14 @@ export function ConfigPanel({
                     onClick={() => onChange({ theme: theme.id })}
                     aria-pressed={active}
                     className={`flex flex-col items-center gap-1 rounded-lg px-1 py-1.5 transition ${
-                      active ? 'bg-slate-900/5 ring-2 ring-slate-900' : 'ring-1 ring-slate-200 hover:ring-slate-300'
+                      active ? 'bg-accent-soft ring-2 ring-accent' : 'ring-1 ring-line hover:ring-line-strong'
                     }`}
                   >
                     <span
                       className="h-4 w-full rounded-sm ring-1 ring-black/10"
                       style={{ background: theme.swatch }}
                     />
-                    <span className="text-[10px] leading-none text-slate-600">{theme.label}</span>
+                    <span className="text-[10px] leading-none text-ink-muted">{theme.label}</span>
                   </button>
                 )
               })}
